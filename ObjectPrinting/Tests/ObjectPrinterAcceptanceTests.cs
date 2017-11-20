@@ -12,8 +12,7 @@ namespace ObjectPrinting.Tests
 		{
 			var person = new Person { Name = "Alex", Age = 19 };
 
-			var printer = ObjectPrinter.For<Person>().ExludeType<Guid>();
-			ObjectPrinter.For<Person>()
+			var printer = ObjectPrinter.For<Person>()
 				//1. Исключить из сериализации свойства определенного типа
 				.ExcludeType<Guid>()
 				//2. Указать альтернативный способ сериализации для определенного типа
@@ -28,9 +27,11 @@ namespace ObjectPrinting.Tests
 				.ExcludeProperty(p => p.Name);
 
 			string s1 = printer.PrintToString(person);
-
+			Console.WriteLine(s1);
 			//7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
+			Console.WriteLine(person.PrintToString());
 			//8. ...с конфигурированием
+			Console.WriteLine(person.PrintToString(prop => prop.ExcludeType<Guid>()));
 		}
 	}
 }

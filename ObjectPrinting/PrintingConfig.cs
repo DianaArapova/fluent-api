@@ -1,14 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace ObjectPrinting
 {
 	public class PrintingConfig<TOwner>
     {
+	    private readonly HashSet<Type> excludedTypes = new HashSet<Type>();
+	    private readonly HashSet<string> excludedProperties = new HashSet<string>();
 
-        public string PrintToString(TOwner obj)
+		public string PrintToString(TOwner obj)
         {
             return PrintToString(obj, 0);
         }
@@ -33,17 +37,16 @@ namespace ObjectPrinting
             sb.AppendLine(type.Name);
             foreach (var propertyInfo in type.GetProperties())
             {
-                sb.Append(identation + propertyInfo.Name + " = " +
+	            if (excludedProperties.Contains(propertyInfo.Name))
+		            continue;
+	            if (excludedTypes.Contains(propertyInfo.PropertyType))
+		            continue;
+				sb.Append(identation + propertyInfo.Name + " = " +
                           PrintToString(propertyInfo.GetValue(obj),
                               nestingLevel + 1));
             }
             return sb.ToString();
         }
-
-	    public PrintingConfig<TOwner> ExludeType<TProp>()
-	    {
-		    return this;
-	    }
 
 	    public PropertyPrintingConfing<TOwner, TPropType> Printing<TPropType>()
 	    {
@@ -60,12 +63,16 @@ namespace ObjectPrinting
 			(Expression<Func<TOwner, TPropType>> selector)
 
 	    {
+		    var propetyInformation =
+			    ((MemberExpression) selector.Body).Member as PropertyInfo;
+		    if (propetyInformation != null)
+				excludedProperties.Add(propetyInformation.Name);
 		    return this;
 	    }
 
 	    public PrintingConfig<TOwner> ExcludeType<T>()
 	    {
-
+		    excludedTypes.Add(typeof(T));
 		    return this;
 	    }
     }
