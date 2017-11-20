@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ObjectPrinting
 {
-	public class PropertyPrintingConfing<TOwner, TPropType> : IPropertyPrintingConfig<TOwner, TPropType>
+	public class PropertyPrintingConfing<TOwner, TPropType> : IPropertyPrintingConfig<TOwner>
 	{
 		private readonly PrintingConfig<TOwner> printingConfig;
 		public PropertyPrintingConfing(PrintingConfig<TOwner> printingConfig)
@@ -19,8 +19,8 @@ namespace ObjectPrinting
 			return printingConfig;
 		}
 
-		PrintingConfig<TOwner> IPropertyPrintingConfig<TOwner, TPropType>.
-			PrintingConfig => printingConfig;
+		PrintingConfig<TOwner> IPropertyPrintingConfig<TOwner>
+			.PrintingConfig => printingConfig;
 
 
 	}

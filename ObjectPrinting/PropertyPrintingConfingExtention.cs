@@ -17,8 +17,7 @@ namespace ObjectPrinting
 		}
 
 		public static PrintingConfig<TOwner> TakeChars<TOwner>(
-			this PropertyPrintingConfing<TOwner, string> a,
-			int i)
+			this PropertyPrintingConfing<TOwner, string> a, int i)
 		{
 
 			return ((IPropertyPrintingConfig<TOwner, string>)a).PrintingConfig;
