@@ -6,20 +6,27 @@ using System.Threading.Tasks;
 
 namespace ObjectPrinting
 {
-	public class PropertyPrintingConfing<TOwner, TPropType> : IPropertyPrintingConfig<TOwner>
+	public class PropertyPrintingConfing<TOwner, TPropType> : IPropertyPrintingConfig<TOwner, TPropType>
 	{
 		private readonly PrintingConfig<TOwner> printingConfig;
-		public PropertyPrintingConfing(PrintingConfig<TOwner> printingConfig)
+		private readonly string propertyName;
+
+		public PropertyPrintingConfing(PrintingConfig<TOwner> printingConfig, string propertyName = null)
 		{
+			this.propertyName = propertyName;
 			this.printingConfig = printingConfig;
 		}
 
-		public PrintingConfig<TOwner> Using(Func<TPropType, string> seializeFunc)
+		public PrintingConfig<TOwner> Using(Func<TPropType, string> serializeFunc)
 		{
+			if (propertyName != null)
+				printingConfig.PropertySerializator[propertyName] = serializeFunc;
+			else
+				printingConfig.TypeSerializator[typeof(TPropType)] = serializeFunc;
 			return printingConfig;
 		}
 
-		PrintingConfig<TOwner> IPropertyPrintingConfig<TOwner>
+		PrintingConfig<TOwner> IPropertyPrintingConfig<TOwner, TPropType>
 			.PrintingConfig => printingConfig;
 
 

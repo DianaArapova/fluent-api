@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -9,15 +10,25 @@ namespace ObjectPrinting
 {
 	public class PrintingConfig<TOwner>
     {
-	    private readonly HashSet<Type> excludedTypes = new HashSet<Type>();
-	    private readonly HashSet<string> excludedProperties = new HashSet<string>();
+	    private readonly HashSet<Type> excludedTypes = 
+			new HashSet<Type>();
+	    private readonly HashSet<string> excludedProperties = 
+			new HashSet<string>();
+		public readonly Dictionary<Type, Delegate> TypeSerializator = 
+			new Dictionary<Type, Delegate>();
+	    public readonly Dictionary<string, Delegate> PropertySerializator = 
+			new Dictionary<string, Delegate>();
+	    public readonly Dictionary<Type, CultureInfo> Cultures = 
+			new Dictionary<Type, CultureInfo>();
 
-		public string PrintToString(TOwner obj)
+	    public int? Length { get; set; }
+
+	    public string PrintToString(TOwner obj)
         {
             return PrintToString(obj, 0);
         }
 
-        private string PrintToString(object obj, int nestingLevel)
+		private string PrintToString(object obj, int nestingLevel)
         {
             //TODO apply configurations
             if (obj == null)
@@ -28,10 +39,14 @@ namespace ObjectPrinting
                 typeof(int), typeof(double), typeof(float), typeof(string),
                 typeof(DateTime), typeof(TimeSpan)
             };
-            if (finalTypes.Contains(obj.GetType()))
-                return obj + Environment.NewLine;
+	        if (finalTypes.Contains(obj.GetType()))
+	        {
+		        if (obj is string str && Length != null)
+			        return str.Substring(0, Length.Value) + Environment.NewLine;
+		        return obj + Environment.NewLine;
+	        }
 
-            var identation = new string('\t', nestingLevel + 1);
+	        var identation = new string('\t', nestingLevel + 1);
             var sb = new StringBuilder();
             var type = obj.GetType();
             sb.AppendLine(type.Name);
@@ -42,13 +57,41 @@ namespace ObjectPrinting
 	            if (excludedTypes.Contains(propertyInfo.PropertyType))
 		            continue;
 				sb.Append(identation + propertyInfo.Name + " = " +
-                          PrintToString(propertyInfo.GetValue(obj),
-                              nestingLevel + 1));
+				          PrintWithInformation(obj, nestingLevel, propertyInfo));
             }
             return sb.ToString();
         }
 
-	    public PropertyPrintingConfing<TOwner, TPropType> Printing<TPropType>()
+	    string PrintWithInformation(object obj, int nestingLevel, PropertyInfo propertyInfo)
+	    {
+		    if (PropertySerializator.ContainsKey(propertyInfo.Name))
+			    return PropertySerializator[propertyInfo.Name]
+				           .DynamicInvoke(propertyInfo.GetValue(obj)) 
+						   + Environment.NewLine;
+
+		    if (TypeSerializator.ContainsKey(propertyInfo.PropertyType))
+			    return TypeSerializator[propertyInfo.PropertyType]
+				           .DynamicInvoke(propertyInfo.GetValue(obj)) 
+						   + Environment.NewLine;
+
+		    if (Cultures.ContainsKey(propertyInfo.PropertyType))
+		    {
+			    return ((IFormattable)propertyInfo.GetValue(obj))
+			           .ToString(null, CultureInfo.CurrentCulture) 
+					   + Environment.NewLine;
+		    }
+
+		    return PrintToString(propertyInfo.GetValue(obj),
+			    nestingLevel + 1);
+	    }
+
+		private string GetPropertyName<TPropType>(Expression<Func<TOwner, TPropType>> selector)
+	    {
+		    return (((MemberExpression)selector.Body).Member as PropertyInfo)?.Name;
+
+	    }
+
+		public PropertyPrintingConfing<TOwner, TPropType> Printing<TPropType>()
 	    {
 		    return new PropertyPrintingConfing<TOwner,TPropType>(this);
 	    }
@@ -56,17 +99,15 @@ namespace ObjectPrinting
 	    public PropertyPrintingConfing<TOwner, TPropType> Printing<TPropType>
 			(Expression<Func<TOwner, TPropType>> selector)
 	    {
-			return new PropertyPrintingConfing<TOwner, TPropType>(this);
+			return new PropertyPrintingConfing<TOwner, TPropType>(
+				this, GetPropertyName(selector));
 	    }
 
 	    public PrintingConfig<TOwner> ExcludeProperty<TPropType>
 			(Expression<Func<TOwner, TPropType>> selector)
 
 	    {
-		    var propetyInformation =
-			    ((MemberExpression) selector.Body).Member as PropertyInfo;
-		    if (propetyInformation != null)
-				excludedProperties.Add(propetyInformation.Name);
+			excludedProperties.Add(GetPropertyName(selector));
 		    return this;
 	    }
 

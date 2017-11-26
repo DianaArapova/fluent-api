@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Globalization;
+using System.Xml.Serialization;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace ObjectPrinting.Tests
@@ -18,7 +20,7 @@ namespace ObjectPrinting.Tests
 				//2. Указать альтернативный способ сериализации для определенного типа
 				.Printing<int>().Using(i => i.ToString())
 				//3. Для числовых типов указать культуру
-				.Printing<int>().Using(CultureInfo.CurrentCulture)
+				.Printing<double>().Using(CultureInfo.CurrentCulture)
 				//4. Настроить сериализацию конкретного свойства
 				.Printing(p => p.Age).Using(age => age.ToString())
 				//5. Настроить обрезание строковых свойств (метод должен быть виден только для строковых свойств)
@@ -31,7 +33,63 @@ namespace ObjectPrinting.Tests
 			//7. Синтаксический сахар в виде метода расширения, сериализующего по-умолчанию		
 			Console.WriteLine(person.PrintToString());
 			//8. ...с конфигурированием
-			Console.WriteLine(person.PrintToString(prop => prop.ExcludeType<Guid>()));
+			Console.WriteLine(person.PrintToString(prop => prop.Printing<string>().TakeChars(1).ExcludeType<Guid>()));
+		}
+
+		[Test]
+		public void PrintingConfig_TakeChar_ShouldCutCorrectly()
+		{
+			var person = new Person { Name = "Diana", Age = 20, Height = 165.4 };
+			var expected = string.Join(Environment.NewLine,
+				               "Person", "\tId = Guid", "\tName = Di",
+				               "\tHeight = 165,4", "\tAge = 20") + Environment.NewLine;
+			ObjectPrinter.For<Person>()
+				.Printing<string>().TakeChars(2)
+				.PrintToString(person)
+				.Should()
+				.Be(expected);
+		}
+
+		[Test]
+		public void PrintingConfig_SetCulture_ShouldGetCorrectrlyCulture()
+		{
+			var person = new Person { Name = "Diana", Age = 20, Height = 165.4 };
+			var expected = string.Join(Environment.NewLine,
+				               "Person", "\tId = Guid", "\tName = Diana",
+				               "\tHeight = 165,4", "\tAge = 20") + Environment.NewLine;
+			ObjectPrinter.For<Person>()
+				.Printing<double>().Using(CultureInfo.CurrentCulture)
+				.PrintToString(person)
+				.Should()
+				.Be(expected);
+		}
+
+		[Test]
+		public void PrintingConfing_ExcludeProperty()
+		{
+			var person = new Person { Name = "Diana", Age = 20, Height = 165.4 };
+			var expected = string.Join(Environment.NewLine,
+				               "Person", "\tId = Guid", "\tName = Diana",
+				               "\tHeight = 165,4") + Environment.NewLine;
+			ObjectPrinter.For<Person>()
+				.ExcludeProperty(p => p.Age)
+				.PrintToString(person)
+				.Should()
+				.Be(expected);
+		}
+
+		[Test]
+		public void PrintingConfing_ExcludeType()
+		{
+			var person = new Person { Name = "Diana", Age = 20, Height = 165.4 };
+			var expected = string.Join(Environment.NewLine,
+				               "Person", "\tName = Diana",
+				               "\tHeight = 165,4", "\tAge = 20") + Environment.NewLine;
+			ObjectPrinter.For<Person>()
+				.ExcludeType<Guid>()
+				.PrintToString(person)
+				.Should()
+				.Be(expected);
 		}
 	}
 }
