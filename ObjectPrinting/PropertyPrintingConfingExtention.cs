@@ -15,7 +15,7 @@ namespace ObjectPrinting
 		{
 			var printingConfig = ((IPropertyPrintingConfig<TOwner, double>)propertyPrintingConfig)
 				.PrintingConfig;
-			printingConfig.Cultures.Add(typeof(double), cultureInfo);
+			printingConfig.Cultures.SetItem(typeof(double), cultureInfo);
 			return printingConfig;
 		}
 
@@ -23,8 +23,11 @@ namespace ObjectPrinting
 			this PropertyPrintingConfing<TOwner, string> propertyPrintingConfig, int length)
 		{
 			var printingConfig = ((IPropertyPrintingConfig<TOwner, string>)propertyPrintingConfig)
-				.PrintingConfig;
-			printingConfig.Length = length;
+				.PrintingConfig.CopyCurrentConfig();
+			printingConfig.TypeSerializator = printingConfig.TypeSerializator.SetItem(
+				typeof(string),
+				(Func <string, string>) (obj => obj.Substring(0, length)));
+			
 			return printingConfig;
 		}
 	}

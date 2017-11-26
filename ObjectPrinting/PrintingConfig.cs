@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -9,19 +11,17 @@ using System.Text;
 namespace ObjectPrinting
 {
 	public class PrintingConfig<TOwner>
-    {
-	    private readonly HashSet<Type> excludedTypes = 
-			new HashSet<Type>();
-	    private readonly HashSet<string> excludedProperties = 
-			new HashSet<string>();
-		public readonly Dictionary<Type, Delegate> TypeSerializator = 
-			new Dictionary<Type, Delegate>();
-	    public readonly Dictionary<string, Delegate> PropertySerializator = 
-			new Dictionary<string, Delegate>();
-	    public readonly Dictionary<Type, CultureInfo> Cultures = 
-			new Dictionary<Type, CultureInfo>();
-
-	    public int? Length { get; set; }
+	{
+		private ImmutableHashSet<Type> excludedTypes = 
+			ImmutableHashSet<Type>.Empty;
+	    private ImmutableHashSet<string> excludedProperties =
+		    ImmutableHashSet<string>.Empty;
+		public ImmutableDictionary<Type, Delegate> TypeSerializator = 
+			ImmutableDictionary<Type, Delegate>.Empty;
+	    public ImmutableDictionary<string, Delegate> PropertySerializator = 
+			ImmutableDictionary<string, Delegate>.Empty;
+	    public ImmutableDictionary<Type, CultureInfo> Cultures = 
+			ImmutableDictionary<Type, CultureInfo>.Empty;
 
 	    public string PrintToString(TOwner obj)
         {
@@ -41,8 +41,6 @@ namespace ObjectPrinting
             };
 	        if (finalTypes.Contains(obj.GetType()))
 	        {
-		        if (obj is string str && Length != null)
-			        return str.Substring(0, Length.Value) + Environment.NewLine;
 		        return obj + Environment.NewLine;
 	        }
 
@@ -107,14 +105,21 @@ namespace ObjectPrinting
 			(Expression<Func<TOwner, TPropType>> selector)
 
 	    {
-			excludedProperties.Add(GetPropertyName(selector));
-		    return this;
+		    var configure = CopyCurrentConfig();
+		    configure.excludedProperties = configure.excludedProperties.Add(GetPropertyName(selector));
+		    return configure;
 	    }
 
 	    public PrintingConfig<TOwner> ExcludeType<T>()
 	    {
-		    excludedTypes.Add(typeof(T));
-		    return this;
+		    var configure = CopyCurrentConfig();
+		    configure.excludedTypes = configure.excludedTypes.Add(typeof(T));
+		    return configure;
 	    }
-    }
+
+		public PrintingConfig<TOwner> CopyCurrentConfig()
+		{
+			return (PrintingConfig<TOwner>)MemberwiseClone();
+		}
+	}
 }

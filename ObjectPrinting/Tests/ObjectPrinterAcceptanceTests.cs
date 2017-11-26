@@ -91,5 +91,28 @@ namespace ObjectPrinting.Tests
 				.Should()
 				.Be(expected);
 		}
+
+		[Test]
+		public void PrintingConfing_IsImmutable()
+		{
+			var person = new Person { Name = "Diana", Age = 20, Height = 165.4 };
+			var expected1 = string.Join(Environment.NewLine,
+				               "Person", "\tId = Guid", "\tName = Di",
+				               "\tHeight = 165,4", "\tAge = 20") + Environment.NewLine;
+			var expected2 = string.Join(Environment.NewLine,
+				                "Person", "\tId = Guid", "\tName = D",
+				                "\tHeight = 165,4", "\tAge = 20") + Environment.NewLine;
+			var painter = ObjectPrinter.For<Person>();
+			var take1 = painter.Printing<string>()
+				.TakeChars(2);
+			var take2 = painter.Printing<string>()
+				.TakeChars(1);
+			take1.PrintToString(person)
+				.Should()
+				.Be(expected1);
+			take2.PrintToString(person)
+				.Should()
+				.Be(expected2);
+		}
 	}
 }

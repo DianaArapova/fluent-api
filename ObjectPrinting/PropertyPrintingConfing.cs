@@ -19,11 +19,14 @@ namespace ObjectPrinting
 
 		public PrintingConfig<TOwner> Using(Func<TPropType, string> serializeFunc)
 		{
+			var configure = printingConfig.CopyCurrentConfig();
 			if (propertyName != null)
-				printingConfig.PropertySerializator[propertyName] = serializeFunc;
+				configure.PropertySerializator = 
+					configure.PropertySerializator.SetItem(propertyName, serializeFunc);
 			else
-				printingConfig.TypeSerializator[typeof(TPropType)] = serializeFunc;
-			return printingConfig;
+				configure.TypeSerializator = 
+					configure.TypeSerializator.SetItem(typeof(TPropType), serializeFunc);
+			return configure;
 		}
 
 		PrintingConfig<TOwner> IPropertyPrintingConfig<TOwner, TPropType>
