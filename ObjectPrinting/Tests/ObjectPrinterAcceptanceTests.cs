@@ -23,7 +23,7 @@ namespace ObjectPrinting.Tests
 			var printer = ObjectPrinter.For<E>();
 
 			Console.WriteLine(printer
-				.PrintToString(new E {arr = new { 1, 2} }));
+				.PrintToString(new E {arr = new []{ 1, 2} }));
 	}
 		[Test]
 		public void Demo()
