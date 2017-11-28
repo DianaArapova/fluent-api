@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Xml.Serialization;
@@ -11,19 +12,19 @@ namespace ObjectPrinting.Tests
 {
 	class E
 	{
-		public Person[] arr { get; set; }
+		public int[] arr { get; set; }
 	}
 	[TestFixture]
 	public class ObjectPrinterAcceptanceTests
 	{
 		[Test]
-		public void Incorrect()
+		public void PrintIEnumerable()
 		{
 			var printer = ObjectPrinter.For<E>();
 
 			Console.WriteLine(printer
-				.PrintToString(new E { arr = new[] { new Person { Name = "Alex", Age = 19 } , new Person { Name = "Alex", Age = 19 } } }));
-		}
+				.PrintToString(new E {arr = new { 1, 2} }));
+	}
 		[Test]
 		public void Demo()
 		{
