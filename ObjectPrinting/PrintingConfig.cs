@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using ObjectPrinting.Tests;
 
 namespace ObjectPrinting
 {
@@ -29,36 +31,43 @@ namespace ObjectPrinting
         }
 
 		private string PrintToString(object obj, int nestingLevel)
-        {
-            //TODO apply configurations
-            if (obj == null)
-                return "null" + Environment.NewLine;
+		{
+			//TODO apply configurations
+			if (obj == null)
+				return "null" + Environment.NewLine;
 
-            var finalTypes = new[]
-            {
-                typeof(int), typeof(double), typeof(float), typeof(string),
-                typeof(DateTime), typeof(TimeSpan)
-            };
-	        if (finalTypes.Contains(obj.GetType()))
-	        {
-		        return obj + Environment.NewLine;
-	        }
+			var finalTypes = new[]
+			{
+				typeof(int), typeof(double), typeof(float), typeof(string),
+				typeof(DateTime), typeof(TimeSpan),
+			};
+			
+			if (finalTypes.Contains(obj.GetType()))
+			{
+				return obj + Environment.NewLine;
+			}
 
-	        var identation = new string('\t', nestingLevel + 1);
-            var sb = new StringBuilder();
-            var type = obj.GetType();
-            sb.AppendLine(type.Name);
-            foreach (var propertyInfo in type.GetProperties())
-            {
-	            if (excludedProperties.Contains(propertyInfo.Name))
-		            continue;
-	            if (excludedTypes.Contains(propertyInfo.PropertyType))
-		            continue;
+			var identation = new string('\t', nestingLevel + 1);
+			var sb = new StringBuilder();
+			var type = obj.GetType();
+			sb.AppendLine(type.Name);
+			foreach (var propertyInfo in type.GetProperties())
+			{
+				
+				if (excludedProperties.Contains(propertyInfo.Name))
+					continue;
+				if (excludedTypes.Contains(propertyInfo.PropertyType))
+					continue;
+				if (obj is IEnumerable)
+				{
+					sb.Append(PrintWithInformation(obj, nestingLevel, propertyInfo));
+					break;
+				}
 				sb.Append(identation + propertyInfo.Name + " = " +
 				          PrintWithInformation(obj, nestingLevel, propertyInfo));
-            }
-            return sb.ToString();
-        }
+			}
+			return sb.ToString();
+		}
 
 	    string PrintWithInformation(object obj, int nestingLevel, PropertyInfo propertyInfo)
 	    {
@@ -71,6 +80,16 @@ namespace ObjectPrinting
 			    return TypeSerializator[propertyInfo.PropertyType]
 				           .DynamicInvoke(propertyInfo.GetValue(obj)) 
 						   + Environment.NewLine;
+
+		    if (obj is IEnumerable enumerable)
+		    {
+				var sb = new StringBuilder();
+			    foreach (var a in enumerable)
+			    {
+				    sb.Append(ObjectPrinter.For<object>().PrintToString(a, nestingLevel + 1));
+			    }
+			    return sb.ToString();
+			}
 
 		    if (Cultures.ContainsKey(propertyInfo.PropertyType))
 		    {

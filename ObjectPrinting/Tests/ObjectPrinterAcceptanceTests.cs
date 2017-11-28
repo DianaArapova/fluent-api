@@ -1,14 +1,29 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using System.Xml.Serialization;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace ObjectPrinting.Tests
 {
+	class E
+	{
+		public Person[] arr { get; set; }
+	}
 	[TestFixture]
 	public class ObjectPrinterAcceptanceTests
 	{
+		[Test]
+		public void Incorrect()
+		{
+			var printer = ObjectPrinter.For<E>();
+
+			Console.WriteLine(printer
+				.PrintToString(new E { arr = new[] { new Person { Name = "Alex", Age = 19 } , new Person { Name = "Alex", Age = 19 } } }));
+		}
 		[Test]
 		public void Demo()
 		{
