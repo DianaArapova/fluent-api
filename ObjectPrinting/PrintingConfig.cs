@@ -90,10 +90,12 @@ namespace ObjectPrinting
 
 		    if (obj is IEnumerable enumerable)
 		    {
+			    
+			    
 				var sb = new StringBuilder();
 			    foreach (var a in enumerable)
 			    {
-				    sb.Append(ObjectPrinter.For<object>().PrintToString(a, nestingLevel + 1, new Stack<object>()));
+					sb.Append(PrintToString(a, nestingLevel + 1, new Stack<object>()));
 			    }
 			    return sb.ToString();
 			}
