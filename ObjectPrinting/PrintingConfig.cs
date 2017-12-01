@@ -27,10 +27,10 @@ namespace ObjectPrinting
 
 	    public string PrintToString(TOwner obj)
         {
-            return PrintToString(obj, 0);
+            return PrintToString(obj, 0, new Stack<object>());
         }
 
-		private string PrintToString(object obj, int nestingLevel)
+		private string PrintToString(object obj, int nestingLevel, Stack<object> grayObjectInDfs)
 		{
 			//TODO apply configurations
 			if (obj == null)
@@ -58,18 +58,27 @@ namespace ObjectPrinting
 					continue;
 				if (excludedTypes.Contains(propertyInfo.PropertyType))
 					continue;
+				grayObjectInDfs.Push(obj);
+				if (grayObjectInDfs.Contains(propertyInfo.GetValue(obj)))
+				{
+					sb.Append(identation).Append(propertyInfo.Name).Append(" = a looped object")
+						.Append(Environment.NewLine);
+					continue;
+				}
+				
 				if (obj is IEnumerable)
 				{
-					sb.Append(PrintWithInformation(obj, nestingLevel, propertyInfo));
+					sb.Append(PrintWithInformation(obj, nestingLevel, propertyInfo, grayObjectInDfs));
 					break;
 				}
 				sb.Append(identation + propertyInfo.Name + " = " +
-				          PrintWithInformation(obj, nestingLevel, propertyInfo));
+				          PrintWithInformation(obj, nestingLevel, propertyInfo, grayObjectInDfs));
 			}
+			grayObjectInDfs.Pop();
 			return sb.ToString();
 		}
 
-	    string PrintWithInformation(object obj, int nestingLevel, PropertyInfo propertyInfo)
+	    string PrintWithInformation(object obj, int nestingLevel, PropertyInfo propertyInfo, Stack<object> grayObjectInDfs)
 	    {
 		    if (PropertySerializator.ContainsKey(propertyInfo.Name))
 			    return PropertySerializator[propertyInfo.Name]
@@ -86,7 +95,7 @@ namespace ObjectPrinting
 				var sb = new StringBuilder();
 			    foreach (var a in enumerable)
 			    {
-				    sb.Append(ObjectPrinter.For<object>().PrintToString(a, nestingLevel + 1));
+				    sb.Append(ObjectPrinter.For<object>().PrintToString(a, nestingLevel + 1, new Stack<object>()));
 			    }
 			    return sb.ToString();
 			}
@@ -99,7 +108,7 @@ namespace ObjectPrinting
 		    }
 
 		    return PrintToString(propertyInfo.GetValue(obj),
-			    nestingLevel + 1);
+			    nestingLevel + 1, grayObjectInDfs);
 	    }
 
 		private string GetPropertyName<TPropType>(Expression<Func<TOwner, TPropType>> selector)

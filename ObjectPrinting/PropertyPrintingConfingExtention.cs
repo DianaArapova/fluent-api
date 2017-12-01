@@ -14,8 +14,8 @@ namespace ObjectPrinting
 			CultureInfo cultureInfo)
 		{
 			var printingConfig = ((IPropertyPrintingConfig<TOwner, double>)propertyPrintingConfig)
-				.PrintingConfig;
-			printingConfig.Cultures.SetItem(typeof(double), cultureInfo);
+				.PrintingConfig.CopyCurrentConfig();
+			printingConfig.Cultures = printingConfig.Cultures.SetItem(typeof(double), cultureInfo);
 			return printingConfig;
 		}
 
