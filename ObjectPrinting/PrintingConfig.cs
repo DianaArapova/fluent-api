@@ -89,9 +89,7 @@ namespace ObjectPrinting
 						   + Environment.NewLine;
 
 		    if (obj is IEnumerable enumerable)
-		    {
-			    
-			    
+		    {   
 				var sb = new StringBuilder();
 			    foreach (var a in enumerable)
 			    {
